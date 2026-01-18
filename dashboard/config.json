@@ -1,0 +1,198 @@
+{
+  "dashboard": {
+    "version": "2.0.0",
+    "title": "Dashboard Optimizare Stocuri - Predicție XGBoost",
+    "description": "Aplicație Streamlit pentru prognoza cererii și managementul stocurilor folosind XGBoost",
+    "author": "Mara",
+    "institution": "Universitate",
+    "thesis_topic": "Optimizarea Stocurilor prin Metode Predictive",
+    "year": 2024,
+    "migration_notes": "Upgraded from LSTM to XGBoost v2.0 - better performance, faster training, fallback baseline support"
+  },
+  
+  "data": {
+    "csv_path": "../data_raw/date_24_art_loreal_20%.csv",
+    "required_columns": {
+      "date": ["DATA", "DATE", "DATE_VÂNZARE", "DATE_VANZARE"],
+      "article_id": ["ID_ARTICOL", "ARTICLE_ID", "SKU"],
+      "target": ["CANTITATE", "QUANTITY", "SALES", "VAL_IESIRE_FARA_TVA"]
+    },
+    "optional_columns": [
+      "ARTICOL",
+      "STOC_INITIAL",
+      "STOC_FINAL",
+      "VAL_IESIRE_CU_TVA",
+      "ADAOS",
+      "TOTAL_DISCOUNT",
+      "RATA_DISCOUNT"
+    ]
+  },
+  
+  "model": {
+    "type": "XGBoost",
+    "framework": "XGBoost 2.0",
+    "primary": {
+      "algorithm": "Gradient Boosting (XGBoost)",
+      "n_estimators": 600,
+      "max_depth": 6,
+      "learning_rate": 0.03,
+      "subsample": 0.9,
+      "colsample_bytree": 0.9,
+      "reg_lambda": 1.0,
+      "reg_alpha": 0.0,
+      "objective": "reg:squarederror",
+      "tree_method": "auto"
+    },
+    "fallback": {
+      "type": "ExponentialSmoothing",
+      "alpha": 0.3,
+      "trigger_condition": "< 30 training samples"
+    },
+    "training": {
+      "min_samples_required": 30,
+      "train_test_split": 0.8,
+      "random_seed": 42,
+      "training_time": "< 1 second typical"
+    },
+    "preprocessing": {
+      "feature_engineering": "Temporal + Lag + Rolling",
+      "temporal_features": ["day_of_week", "month", "is_weekend", "week_of_year", "day_of_month"],
+      "lag_features": [1, 7, 14, 21],
+      "rolling_features": [7, 14],
+      "total_features": 20,
+      "handle_missing_dates": true,
+      "missing_fill_methods": ["forward", "zero"]
+    }
+  },
+  
+  "forecasting": {
+    "horizon_min": 1,
+    "horizon_max": 90,
+    "horizon_default": 7,
+    "multi_step": "recursive",
+    "confidence_intervals": false
+  },
+  
+  "ui": {
+    "framework": "Streamlit",
+    "theme": "plotly_white",
+    "layout": "wide",
+    "tabs": [
+      "Grafic Principal",
+      "Metrice Evaluare",
+      "Tabel Prognoză",
+      "Analiza Risc Ruptură"
+    ],
+    "sidebar_components": [
+      "CSV Path",
+      "Article Selection",
+      "Target Column",
+      "Lookback",
+      "Horizon",
+      "Data Preprocessing",
+      "Model Parameters",
+      "Run Button"
+    ]
+  },
+  
+  "visualization": {
+    "library": "Plotly",
+    "chart_types": [
+      "line_chart",
+      "scatter",
+      "histogram",
+      "bar_chart",
+      "box_plot"
+    ],
+    "metrics_cards": true,
+    "kpi_display": true
+  },
+  
+  "metrics": {
+    "evaluation": {
+      "MAE": "Mean Absolute Error",
+      "RMSE": "Root Mean Squared Error",
+      "MAPE": "Mean Absolute Percentage Error",
+      "R2": "R-squared (Coefficient of Determination)"
+    },
+    "stockout": {
+      "avg_daily_sales": true,
+      "std_daily_sales": true,
+      "zero_sale_days": true,
+      "coefficient_variation": true
+    }
+  },
+  
+  "features": {
+    "current": [
+      "CSV auto-detection",
+      "Article filtering (ID_ARTICOL)",
+      "XGBoost training & forecasting",
+      "Automatic fallback to ExponentialSmoothing",
+      "Multi-step prediction (recursive)",
+      "Metrics calculation (MAE, RMSE, MAPE, R2)",
+      "Interactive visualizations (Plotly)",
+      "CSV export",
+      "Stockout risk analysis",
+      "Reordering recommendations",
+      "Caching for performance",
+      "GDPR compliance (numeric IDs only)",
+      "Feature importance visualization"
+    ],
+    "planned": [
+      "XGBoost hyperparameter tuning (Optuna)",
+      "Ensemble models (XGBoost + ARIMA)",
+      "ARIMA comparison",
+      "Confidence intervals",
+      "Batch processing (multiple articles)",
+      "Database integration",
+      "Real-time updates",
+      "Mobile optimization",
+      "Advanced feature selection",
+      "Seasonal decomposition"
+    ]
+  },
+  
+  "deployment": {
+    "local": {
+      "command": "streamlit run app.py",
+      "requirements_file": "requirements.txt",
+      "python_version": "3.8+"
+    },
+    "cloud": {
+      "supported": ["Streamlit Cloud", "Heroku", "AWS", "Google Cloud"],
+      "docker_ready": true
+    }
+  },
+  
+  "performance": {
+    "caching": {
+      "data_loading": "@st.cache_data",
+      "model_training": "@st.cache_resource",
+      "ttl_minutes": 60
+    },
+    "typical_runtime": {
+      "data_load": "< 1 second",
+      "preprocessing": "< 2 seconds",
+      "model_training": "10-60 seconds",
+      "prediction": "< 2 seconds",
+      "total": "10-60 seconds per article"
+    }
+  },
+  
+  "files": {
+    "app.py": "Main Streamlit application with XGBoost pipeline",
+    "preprocessing.py": "Data loading, cleaning, filtering, preprocessing",
+    "xgboost_model.py": "XGBoost feature engineering, training, prediction (NEW)",
+    "baseline.py": "ExponentialSmoothing fallback model (NEW)",
+    "visualization.py": "Plotly charts, KPI cards, metrics display",
+    "utils.py": "Batch processing, report generation (updated for XGBoost)",
+    "test_setup.py": "Validation and testing script",
+    "requirements.txt": "Python dependencies (XGBoost 2.0+)",
+    "run.bat": "Windows automated launcher",
+    "README.md": "Full documentation",
+    "QUICKSTART.md": "Quick start guide",
+    ".streamlit/config.toml": "Streamlit configuration",
+    "config.json": "This configuration file"
+  }
+}
