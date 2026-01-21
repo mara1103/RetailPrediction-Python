@@ -1,18 +1,7 @@
-[client]
-toolbarMode = "minimal"
-showErrorDetails = true
-
-[server]
-headless = true
-port = 8501
-runOnSave = true
-
 [theme]
-primaryColor = "#FF6B6B"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#F0F2F6"
-textColor = "#262730"
+base = "dark"
+primaryColor = "#6CA0FF"
+backgroundColor = "#0E1117"
+secondaryBackgroundColor = "#151A22"
+textColor = "#E6E9EF"
 font = "sans serif"
-
-[logger]
-level = "info"

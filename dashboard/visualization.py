@@ -50,6 +50,9 @@ def plot_forecast_comparison(
     
     # Test predictions (if available)
     if df_test_pred is not None and len(df_test_pred) > 0:
+
+        print(df_test_pred.columns)
+
         fig.add_trace(go.Scatter(
             x=df_test_pred['DATA'],
             y=df_test_pred['PREDICTIE'],
@@ -74,12 +77,27 @@ def plot_forecast_comparison(
     # Add vertical line to separate history from forecast
     if df_forecast is not None and len(df_forecast) > 0:
         last_hist_date = df_historical['DATA'].max()
-        fig.add_vline(
+        if isinstance(last_hist_date, pd.Timestamp):
+            last_hist_date = last_hist_date.to_pydatetime()
+        fig.add_shape(
+            type='line',
+            x0=last_hist_date,
+            x1=last_hist_date,
+            y0=0,
+            y1=1,
+            xref='x',
+            yref='paper',
+            line=dict(color='gray', dash='dash')
+        )
+        fig.add_annotation(
             x=last_hist_date,
-            line_dash='dash',
-            line_color='gray',
-            annotation_text='Prezent',
-            annotation_position='top right'
+            y=1,
+            xref='x',
+            yref='paper',
+            text='Prezent',
+            showarrow=False,
+            xanchor='left',
+            yanchor='bottom'
         )
     
     fig.update_layout(

@@ -7,7 +7,44 @@ from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime, timedelta
 
 
-def load_and_prepare_data(csv_path: str) -> pd.DataFrame:
+def _black_friday_dates(year: int) -> pd.DatetimeIndex:
+    """
+    Return Black Friday dates based on fixed ranges.
+    """
+    if year == 2024:
+        return pd.date_range(start="2024-11-15", end="2024-11-20", freq="D")
+    if year == 2025:
+        return pd.date_range(start="2025-11-14", end="2025-11-18", freq="D")
+    return pd.DatetimeIndex([])
+
+
+def _handle_black_friday(
+    df: pd.DataFrame,
+    target_col: str,
+    mode: str
+) -> pd.DataFrame:
+    """
+    Exclude Black Friday dates.
+    """
+    if mode != "exclude":
+        return df
+
+    years = df["DATA"].dt.year.dropna().unique()
+    bf_dates = pd.DatetimeIndex([])
+    for year in years:
+        bf_dates = bf_dates.append(_black_friday_dates(int(year)))
+
+    if bf_dates.empty:
+        return df
+
+    is_bf = df["DATA"].isin(bf_dates)
+    return df.loc[~is_bf].reset_index(drop=True)
+
+
+def load_and_prepare_data(
+    csv_path: str,
+    bf_handling: str = "none"
+) -> pd.DataFrame:
     """
     Load CSV and perform initial preprocessing
     
@@ -60,6 +97,9 @@ def load_and_prepare_data(csv_path: str) -> pd.DataFrame:
         if col != 'ID_ARTICOL':
             df[col] = df[col].fillna(0)
     
+    if bf_handling == "exclude":
+        df = _handle_black_friday(df, target_col, bf_handling)
+
     return df, target_col if target_col else 'CANTITATE'
 
 
