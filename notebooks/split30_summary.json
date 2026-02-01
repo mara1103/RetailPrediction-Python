@@ -1,0 +1,88 @@
+[
+  {
+    "notebook": "04_model_optimization.ipynb",
+    "metrics": [],
+    "changed": true
+  },
+  {
+    "notebook": "art144602_Prophet.ipynb",
+    "metrics": [
+      [
+        "MAE",
+        "2.902809722479888"
+      ],
+      [
+        "RMSE",
+        "5.424765588530027"
+      ]
+    ],
+    "changed": false
+  },
+  {
+    "notebook": "art144602_XGBoost-Copy1.ipynb",
+    "metrics": [],
+    "changed": true
+  },
+  {
+    "notebook": "art144602_XGBoost.ipynb",
+    "metrics": [],
+    "changed": false
+  },
+  {
+    "notebook": "art147807_ARIMA_STL_SARIMA.ipynb",
+    "metrics": [
+      [
+        "MAE",
+        "5.308745176118525"
+      ],
+      [
+        "RMSE",
+        "6.532604883342901"
+      ],
+      [
+        "MAE",
+        "281.05380276334677"
+      ],
+      [
+        "RMSE",
+        "284.762461728786"
+      ]
+    ],
+    "changed": false
+  },
+  {
+    "notebook": "art147807_LSTM_14.ipynb",
+    "metrics": [],
+    "changed": false
+  },
+  {
+    "notebook": "art147807_LSTM_21.ipynb",
+    "metrics": [],
+    "changed": false
+  },
+  {
+    "notebook": "art94869_ARIMA.ipynb",
+    "metrics": [],
+    "changed": false
+  },
+  {
+    "notebook": "art94869_ARIMA_Optimized.ipynb",
+    "metrics": [],
+    "changed": false
+  },
+  {
+    "notebook": "Pred_art50647_cozonac_nuca (1).ipynb",
+    "metrics": [],
+    "changed": false
+  },
+  {
+    "notebook": "Untitled-Copy2.ipynb",
+    "metrics": [],
+    "changed": false
+  },
+  {
+    "notebook": "Untitled.ipynb",
+    "metrics": [],
+    "changed": false
+  }
+]
