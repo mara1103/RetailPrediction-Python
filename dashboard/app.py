@@ -1,4 +1,4 @@
-"""
+﻿"""
 Main Streamlit Dashboard Application - XGBoost Version
 Inventory Optimization - Predictive Methods using XGBoost
 
@@ -33,7 +33,7 @@ from visualization import (
 # PAGE CONFIG
 # ============================================================================
 st.set_page_config(
-    page_title="Optimizare Stocuri - XGBoost Dashboard",
+    page_title="Inventory Optimization - XGBoost Dashboard",
     page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -107,29 +107,29 @@ def pick_numeric_column(
 
 
 def get_article_name_col(df: pd.DataFrame) -> str:
-    return find_column(df, ["articol", "denumire", "nume", "product", "produs", "item"])
+    return find_column(df, ["articol", "denumire", "nume", "product", "article", "item"])
 
 
 def gdpr_friendly_label(name: str) -> str:
     name_lower = str(name).lower()
     rules = [
-        ("balsam", ["balsam", "conditioner"]),
-        ("sampon", ["sampon", "shampoo"]),
-        ("masca", ["masca", "mask"]),
-        ("ser", ["ser", "serum"]),
-        ("crema", ["crema", "cream"]),
+        ("balm", ["balsam", "balm", "conditioner"]),
+        ("shampoo", ["sampon", "shampoo"]),
+        ("mask", ["masca", "mask"]),
+        ("serum", ["ser", "serum"]),
+        ("cream", ["crema", "cream"]),
         ("gel", ["gel"]),
-        ("lotiune", ["lotiune", "lotion"]),
+        ("lotion", ["lotiune", "lotion"]),
         ("spray", ["spray"]),
-        ("parfum", ["parfum", "perfume"]),
+        ("perfume", ["parfum", "perfume"]),
         ("deodorant", ["deodorant"]),
-        ("sapun", ["sapun", "soap"]),
-        ("vopsea", ["vopsea", "colorant", "dye"]),
+        ("soap", ["sapun", "soap"]),
+        ("dye", ["vopsea", "colorant", "dye"]),
     ]
     for label, keys in rules:
         if any(k in name_lower for k in keys):
             return label
-    return "articol"
+    return "article"
 
 
 def build_gdpr_name_map(df: pd.DataFrame, article_col: str) -> dict:
@@ -140,9 +140,9 @@ def build_gdpr_name_map(df: pd.DataFrame, article_col: str) -> dict:
     for idx, article_id in enumerate(sorted(df[article_col].unique()), start=1):
         if name_col:
             raw_name = df.loc[df[article_col] == article_id, name_col].dropna()
-            label = gdpr_friendly_label(raw_name.iloc[0]) if not raw_name.empty else "articol"
+            label = gdpr_friendly_label(raw_name.iloc[0]) if not raw_name.empty else "article"
         else:
-            label = "articol"
+            label = "article"
         label_map[article_id] = f"{label.capitalize()} {idx:02d}"
     return label_map
 
@@ -155,14 +155,66 @@ def format_compact(value, decimals: int = 2) -> str:
     return str(value)
 
 
+DISPLAY_COLUMN_MAP = {
+    "DATA": "DATE",
+    "ID_ARTICOL": "ARTICLE_ID",
+    "ARTICOL": "ARTICLE",
+    "CANTITATE": "QUANTITY",
+    "VAL_IESIRE_FARA_TVA": "NET_SALES_NO_VAT",
+    "VAL_IESIRE_CU_TVA": "GROSS_SALES_WITH_VAT",
+    "VAL_INTRARE_FARA_TVA": "NET_COST",
+    "RATA_DISCOUNT": "DISCOUNT_RATE",
+    "ADAOS": "MARKUP",
+    "STOC_INITIAL": "OPENING_STOCK",
+    "STOC_FINAL": "CLOSING_STOCK",
+    "RUPTURA_STOC": "STOCKOUT",
+    "PREDICTIE": "PREDICTION",
+    "Tip": "TYPE",
+}
+
+
+ARTICLE_VALUE_MAP = {
+    "gel purifiant ten": "purifying face gel",
+    "gel curatare fata": "facial cleansing gel",
+    "gel spalare piele sensibila": "sensitive skin cleansing gel",
+    "gel anti-imperfectiuni": "anti-blemish gel",
+    "balsam hidratant corp": "body moisturizing balm",
+    "balsam reparator piele": "skin repair balm",
+    "crema hidratanta fata spf": "face moisturizer SPF",
+    "crema corectoare fata": "corrective face cream",
+    "lotiune hidratanta fata si corp": "face and body hydrating lotion",
+    "sampon antimatreata": "anti-dandruff shampoo",
+    "fluid protectie solara fata": "face sunscreen fluid",
+    "spray protectie solara": "sunscreen spray",
+    "spray protectie solara copii": "kids sunscreen spray",
+}
+
+
+def to_display_df(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
+    if "ARTICOL" in out.columns:
+        out["ARTICOL"] = out["ARTICOL"].astype(str).map(
+            lambda x: ARTICLE_VALUE_MAP.get(x.lower(), x)
+        )
+    if "ARTICLE" in out.columns:
+        out["ARTICLE"] = out["ARTICLE"].astype(str).map(
+            lambda x: ARTICLE_VALUE_MAP.get(x.lower(), x)
+        )
+    if "DATA" in out.columns:
+        out["DATA"] = pd.to_datetime(out["DATA"], errors="coerce").dt.strftime("%Y-%m-%d")
+    if "DATE" in out.columns:
+        out["DATE"] = pd.to_datetime(out["DATE"], errors="coerce").dt.strftime("%Y-%m-%d")
+    return out.rename(columns=DISPLAY_COLUMN_MAP)
+
+
 def metric_display_name(metric_col: str, qty_col: str, val_net_col: str, val_gross_col: str) -> str:
     if metric_col == qty_col:
-        return "Cantitate"
+        return "Quantity"
     if metric_col == val_net_col:
-        return "Valoare fara TVA"
+        return "Value excl. VAT"
     if metric_col == val_gross_col:
-        return "Valoare cu TVA"
-    return metric_col or "Valoare"
+        return "Value incl. VAT"
+    return metric_col or "Value"
 
 
 def render_kpi_card(label: str, value: str, sub: str = "") -> str:
@@ -456,7 +508,7 @@ st.markdown(
 st.markdown(
     """
     <div class="hero">
-        <h1 class="hero-title">Dashboard Optimizare Stocuri - XGBoost</h1>
+        <h1 class="hero-title">Inventory Optimization Dashboard - XGBoost</h1>
         <div class="hero-accent">Inventory Forecasting</div>
     </div>
     """,
@@ -468,8 +520,8 @@ if "model_result" not in st.session_state:
     st.session_state.model_result = None
 
 # Theme Toggle
-st.sidebar.markdown("### Tema")
-mode_label = "Trecere la Day" if is_dark else "Trecere la Night"
+st.sidebar.markdown("### Theme")
+mode_label = "Switch to Day" if is_dark else "Switch to Night"
 st.sidebar.button(mode_label, on_click=toggle_theme, use_container_width=True)
 
 with st.container():
@@ -478,14 +530,14 @@ with st.container():
         st.button(mode_label, on_click=toggle_theme, use_container_width=True)
 
 
-page = st.sidebar.radio("Navigare", ["EDA initiala", "Model", "Risc"], index=0)
+page = st.sidebar.radio("Navigation", ["Data Explorer", "Model", "Risk"], index=0)
 
-st.sidebar.header("Set de date")
-st.sidebar.caption("Calea fisierului CSV")
+st.sidebar.header("Dataset")
+st.sidebar.caption("CSV file path")
 csv_path = st.sidebar.text_input(
-    "Cale CSV",
-    value="../data_raw/date_24_art_loreal_20%.csv",
-    help="Introdu calea relativa sau absoluta la fisierul CSV",
+    "CSV Path",
+    value="../data_raw/date_24_art_portfolio_20.csv",
+    help="Enter relative or absolute path to the CSV file",
     label_visibility="collapsed"
 )
 
@@ -494,10 +546,10 @@ bf_handling = st.sidebar.selectbox(
     "Black Friday",
     options=["none", "exclude"],
     format_func=lambda x: {
-        "none": "Nu modifica",
-        "exclude": "Exclude zile BF (2024: 15-20 nov, 2025: 14-18 nov)"
+        "none": "No change",
+        "exclude": "Exclude BF days (2024: Nov 15-20, 2025: Nov 14-18)"
     }[x],
-    help="Exclude zilele Black Friday",
+    help="Exclude Black Friday dates",
     label_visibility="collapsed"
 )
 
@@ -505,9 +557,9 @@ try:
     df_full, default_target = load_csv_data(csv_path, bf_handling)
     article_ids = get_article_ids(df_full)
     column_options = get_column_options(df_full)
-    st.sidebar.success("CSV incarcat cu succes")
+    st.sidebar.success("CSV loaded successfully")
 except Exception as e:
-    st.sidebar.error(f"Eroare la incarcare CSV: {str(e)}")
+    st.sidebar.error(f"CSV loading error: {str(e)}")
     st.stop()
 
 article_col = "ID_ARTICOL" if "ID_ARTICOL" in df_full.columns else find_column(
@@ -517,7 +569,7 @@ article_col = "ID_ARTICOL" if "ID_ARTICOL" in df_full.columns else find_column(
 if article_col:
     article_ids = sorted(df_full[article_col].unique())
     gdpr_name_map = build_gdpr_name_map(df_full, article_col)
-    gdpr_name_list = [gdpr_name_map.get(a, f"Articol {i+1:02d}") for i, a in enumerate(article_ids)]
+    gdpr_name_list = [gdpr_name_map.get(a, f"Article {i+1:02d}") for i, a in enumerate(article_ids)]
     id_by_name = {gdpr_name_list[i]: article_ids[i] for i in range(len(article_ids))}
     name_by_id = {article_ids[i]: gdpr_name_list[i] for i in range(len(article_ids))}
 else:
@@ -534,8 +586,8 @@ selected_article_id = None
 target_col = default_target
 forecast_button = False
 
-if page != "EDA initiala":
-    st.sidebar.header("Configurare model")
+if page != "Data Explorer":
+    st.sidebar.header("Model settings")
     if article_col:
         if "model_article_id" not in st.session_state:
             st.session_state.model_article_id = article_ids[0]
@@ -554,61 +606,61 @@ if page != "EDA initiala":
                 article_ids[0]
             )
 
-        st.sidebar.caption("Articol (ID)")
+        st.sidebar.caption("Article (ID)")
         st.sidebar.selectbox(
-            "Articol ID",
+            "Article ID",
             options=article_ids,
             key="model_article_id",
             on_change=_sync_model_name,
-            help="Selecteaza ID-ul articolului",
+            help="Select the article ID",
             label_visibility="collapsed"
         )
 
-        st.sidebar.caption("Articol (denumire GDPR friendly)")
+        st.sidebar.caption("Article (GDPR-friendly name)")
         st.sidebar.selectbox(
-            "Articol denumire",
+            "Article name",
             options=gdpr_name_list,
             key="model_article_name",
             on_change=_sync_model_id,
-            help="Selecteaza denumirea generica a articolului",
+            help="Select the generic article label",
             label_visibility="collapsed"
         )
 
         selected_article_id = st.session_state.model_article_id
     else:
-        st.sidebar.warning("Nu exista o coloana ID_ARTICOL pentru selectie articol.")
+        st.sidebar.warning("No ARTICLE_ID column found for article selection.")
 
-    st.sidebar.caption("Variabila tinta")
+    st.sidebar.caption("Target variable")
     target_col = st.sidebar.selectbox(
-        "Variabila tinta",
+        "Target variable",
         options=column_options,
         index=column_options.index(default_target) if default_target in column_options else 0,
-        help="Selecteaza coloana cu valorile de antrenat",
+        help="Select the column to train on",
         label_visibility="collapsed"
     )
 
-    with st.sidebar.expander("Parametrii Model", expanded=False):
+    with st.sidebar.expander("Model parameters", expanded=False):
         col1, col2 = st.columns(2)
         with col1:
-            lookback = st.number_input("Lookback (zile)", min_value=7, max_value=60, value=28)
+            lookback = st.number_input("Lookback (days)", min_value=7, max_value=60, value=28)
         with col2:
-            horizon = st.number_input("Orizont (zile)", min_value=1, max_value=90, value=30)
+            horizon = st.number_input("Horizon (days)", min_value=1, max_value=90, value=30)
 
         col1, col2 = st.columns(2)
         with col1:
             test_size = st.slider("Test size (%)", min_value=10, max_value=40, value=20, step=5) / 100
         with col2:
-            min_samples = st.number_input("Min. esantioane", min_value=10, max_value=100, value=30)
+            min_samples = st.number_input("Min. samples", min_value=10, max_value=100, value=30)
 
     st.sidebar.divider()
     forecast_button = st.sidebar.button(
-        "Genereaza Prognoza",
+        "Generate Forecast",
         use_container_width=True,
         disabled=page != "Model"
     )
 
 df_article = None
-if page != "EDA initiala" and selected_article_id is not None:
+if page != "Data Explorer" and selected_article_id is not None:
     df_article = filter_by_article(df_full, selected_article_id, article_col)
 
 selection_key = (csv_path, bf_handling, selected_article_id, target_col, horizon, test_size, min_samples)
@@ -618,9 +670,9 @@ saved_is_valid = saved is not None and saved.get("selection_key") == selection_k
 # ============================================================================
 # MAIN LOGIC
 # ============================================================================
-if page == "EDA initiala":
-    st.subheader("Explorare set de date")
-    st.caption("Analiza generala a datelor pentru optimizarea stocurilor (fara configurare model).")
+if page == "Data Explorer":
+    st.subheader("Dataset exploration")
+    st.caption("General data analysis for inventory optimization (without model configuration).")
 
     date_min = df_full["DATA"].min()
     date_max = df_full["DATA"].max()
@@ -633,9 +685,9 @@ if page == "EDA initiala":
 
     st.markdown(
         f"""
-        **Descriere dataset**  
-        Interval temporal: **{date_min_str}** - **{date_max_str}** ({total_days} zile)  
-        Articole unice: **{total_articles}**
+        **Dataset summary**  
+        Date range: **{date_min_str}** - **{date_max_str}** ({total_days} days)  
+        Unique articles: **{total_articles}**
         """
     )
 
@@ -662,18 +714,18 @@ if page == "EDA initiala":
 
         col_sel1, col_sel2 = st.columns([1, 1])
         with col_sel1:
-            st.caption("Selectie articol (ID)")
+            st.caption("Article selection (ID)")
             st.selectbox(
-                "Selectie ID",
+                "Select ID",
                 options=article_ids,
                 key="eda_article_id",
                 on_change=_sync_eda_name,
                 label_visibility="collapsed"
             )
         with col_sel2:
-            st.caption("Selectie articol (denumire GDPR friendly)")
+            st.caption("Article selection (GDPR-friendly name)")
             st.selectbox(
-                "Selectie denumire",
+                "Select name",
                 options=gdpr_name_list,
                 key="eda_article_name",
                 on_change=_sync_eda_id,
@@ -681,11 +733,11 @@ if page == "EDA initiala":
             )
 
         selected_eda_id = st.session_state.eda_article_id
-        selected_eda_name = name_by_id.get(selected_eda_id, "Articol")
-        st.caption(f"Articol selectat: **{selected_eda_name}**")
+        selected_eda_name = name_by_id.get(selected_eda_id, "Article")
+        st.caption(f"Selected article: **{selected_eda_name}**")
         df_focus = filter_by_article(df_full, selected_eda_id, article_col)
     else:
-        st.warning("Nu exista o coloana ID_ARTICOL pentru selectie articol. Afisez analiza globala.")
+        st.warning("No ARTICLE_ID column found for article selection. Showing global analysis.")
         df_focus = df_full.copy()
 
     df_focus_all = df_focus
@@ -697,25 +749,25 @@ if page == "EDA initiala":
     if "eda_filter_month" not in st.session_state:
         st.session_state.eda_filter_month = ["All"]
 
-    with st.expander("Filtru temporal", expanded=False):
+    with st.expander("Time filter", expanded=False):
         years = sorted(df_focus_all["DATA"].dt.year.dropna().unique())
         year_options = ["All"] + years
-        st.multiselect("Ani", options=year_options, key="eda_filter_year", default=["All"])
+        st.multiselect("Years", options=year_options, key="eda_filter_year", default=["All"])
 
         month_map = {
-            1: "Ian", 2: "Feb", 3: "Mar", 4: "Apr", 5: "Mai", 6: "Iun",
-            7: "Iul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Noi", 12: "Dec"
+            1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
+            7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
         }
         months = sorted(df_focus_all["DATA"].dt.month.dropna().unique())
         month_labels = [f"{m:02d} - {month_map.get(m, m)}" for m in months]
-        st.multiselect("Luni", options=["All"] + month_labels, key="eda_filter_month", default=["All"])
+        st.multiselect("Months", options=["All"] + month_labels, key="eda_filter_month", default=["All"])
 
         col_a, col_b = st.columns(2)
         with col_a:
-            if st.button("Aplica filtru", use_container_width=True):
+            if st.button("Apply filter", use_container_width=True):
                 st.session_state.eda_filter_active = True
         with col_b:
-            if st.button("Reset filtru", use_container_width=True):
+            if st.button("Reset filter", use_container_width=True):
                 st.session_state.eda_filter_active = False
                 st.session_state.eda_filter_year = ["All"]
                 st.session_state.eda_filter_month = ["All"]
@@ -729,7 +781,7 @@ if page == "EDA initiala":
             df_focus = df_focus[df_focus["DATA"].dt.month.isin(month_nums)]
 
         if df_focus.empty:
-            st.warning("Nu exista date pentru filtrul selectat.")
+            st.warning("No data available for selected filter.")
             st.stop()
 
     exclude_cols = ['RUPTURA_STOC', article_col, 'STOC_INITIAL', 'STOC_FINAL']
@@ -753,10 +805,10 @@ if page == "EDA initiala":
         </div>
         """
     ).format(
-        c1=render_kpi_card("Total cantitati", format_compact(qty_total, 0)),
-        c2=render_kpi_card("Valoare fara TVA", format_compact(val_net_total, 2)),
-        c3=render_kpi_card("Valoare cu TVA", format_compact(val_gross_total, 2)),
-        c4=render_kpi_card("Structura articol", f"{len(df_focus):,} randuri", f"{total_cols} coloane")
+        c1=render_kpi_card("Total quantity", format_compact(qty_total, 0)),
+        c2=render_kpi_card("Value excl. VAT", format_compact(val_net_total, 2)),
+        c3=render_kpi_card("Value incl. VAT", format_compact(val_gross_total, 2)),
+        c4=render_kpi_card("Article structure", f"{len(df_focus):,} rows", f"{total_cols} columns")
     )
     st.markdown(cards_html, unsafe_allow_html=True)
 
@@ -766,8 +818,8 @@ if page == "EDA initiala":
             daily_qty,
             x="DATA",
             y=qty_col,
-            title="Evolutie zilnica a cantitatilor (total)",
-            labels={"DATA": "Data", qty_col: "Cantitate"}
+            title="Daily quantity trend (total)",
+            labels={"DATA": "Date", qty_col: "Quantity"}
         )
         fig_qty.update_layout(height=320, margin=dict(l=10, r=10, t=40, b=10))
         apply_plot_theme(fig_qty)
@@ -778,7 +830,7 @@ if page == "EDA initiala":
         main_label = metric_display_name(main_metric, qty_col, val_net_col, val_gross_col)
         col1, col2 = st.columns(2)
         with col1:
-            fig_dist = plot_distribution(df_focus[main_metric], title=f"Distributie - {main_label}")
+            fig_dist = plot_distribution(df_focus[main_metric], title=f"Distribution - {main_label}")
             fig_dist.update_layout(height=260, margin=dict(l=10, r=10, t=40, b=10))
             fig_dist.update_xaxes(title_text=main_label)
             apply_plot_theme(fig_dist)
@@ -795,8 +847,8 @@ if page == "EDA initiala":
                 monthly_avg,
                 x="LUNA",
                 y=main_metric,
-                title=f"Medie lunara - {main_label}",
-                labels={"LUNA": "Luna", main_metric: f"{main_label} (medie)"}
+                title=f"Monthly average - {main_label}",
+                labels={"LUNA": "Month", main_metric: f"{main_label} (avg)"}
             )
             fig_month.update_layout(height=260, margin=dict(l=10, r=10, t=40, b=10))
             apply_plot_theme(fig_month)
@@ -818,8 +870,8 @@ if page == "EDA initiala":
                     top_df,
                     x=article_col,
                     y=top_metric,
-                    title=f"Top 10 articole dupa {top_label} (suma)",
-                    labels={article_col: "Articol", top_metric: f"{top_label} (suma)"}
+                    title=f"Top 10 articles by {top_label} (sum)",
+                    labels={article_col: "Article", top_metric: f"{top_label} (sum)"}
                 )
                 fig_top.update_layout(height=280, margin=dict(l=10, r=10, t=40, b=10))
                 apply_plot_theme(fig_top)
@@ -838,24 +890,24 @@ if page == "EDA initiala":
                     zero_share,
                     x=article_col,
                     y="PCT_ZERO",
-                    title="Top articole cu zile fara vanzare (%)",
-                    labels={article_col: "Articol", "PCT_ZERO": "% zile zero"}
+                    title="Top articles by zero-sale days (%)",
+                    labels={article_col: "Article", "PCT_ZERO": "% zero days"}
                 )
                 fig_zero.update_layout(height=280, margin=dict(l=10, r=10, t=40, b=10))
                 apply_plot_theme(fig_zero)
                 st.plotly_chart(fig_zero, use_container_width=True)
 
-    st.subheader("Preview date")
-    st.dataframe(df_focus.head(20), use_container_width=True, hide_index=True)
+    st.subheader("Data preview")
+    st.dataframe(to_display_df(df_focus.head(20)), use_container_width=True, hide_index=True)
 
 elif page == "Model":
     if df_article is None or len(df_article) == 0:
-        st.error(f"Nu s-au gasit date pentru articolul {selected_article_id}")
+        st.error(f"No data found for article {selected_article_id}")
         st.stop()
 
     if forecast_button:
         st.divider()
-        st.info(f"ID Articol: {selected_article_id} | Date: {len(df_article)} randuri")
+        st.info(f"Article ID: {selected_article_id} | Data: {len(df_article)} rows")
 
         model, fe, info = build_and_train_xgboost(
             df_article,
@@ -867,13 +919,13 @@ elif page == "Model":
         )
 
         if model is None:
-            st.warning(f"Insuficienta date pentru XGBoost: {info.get('error', 'Motiv necunoscut')}")
-            st.info("Se foloseste model baseline (Exponential Smoothing / Moving Average)")
+            st.warning(f"Insufficient data for XGBoost: {info.get('error', 'Unknown reason')}")
+            st.info("Using baseline model (Exponential Smoothing / Moving Average)")
 
             baseline_model, baseline_info = build_baseline_fallback(df_article, target_col=target_col)
 
             if baseline_model is None:
-                st.error("Insuficienta date chiar si pentru baseline!")
+                st.error("Insufficient data even for baseline model!")
                 st.stop()
 
             y_baseline = df_article[target_col].values
@@ -889,7 +941,7 @@ elif page == "Model":
                     freq='D'
                 ),
                 'PREDICTIE': future_pred,
-                'Tip': 'Prognoza (Baseline)'
+                'Tip': 'Baseline forecast'
             })
 
             st.session_state.model_result = {
@@ -919,7 +971,7 @@ elif page == "Model":
             df_plot = pd.DataFrame({
                 'DATA': forecast_dates,
                 'PREDICTIE': future_pred,
-                'Tip': 'Prognoza XGBoost'
+                'Tip': 'XGBoost forecast'
             })
 
             st.session_state.model_result = {
@@ -939,11 +991,11 @@ elif page == "Model":
             }
 
     if not saved_is_valid:
-        st.info('Apasa "Genereaza Prognoza" pentru a rula modelul.')
+        st.info('Click "Generate Forecast" to run the model.')
     else:
         result = st.session_state.model_result
         if result["model_type"] == "baseline":
-            st.success(f"Prognoza {result['horizon']} zile generata (baseline model)")
+            st.success(f"{result['horizon']}-day forecast generated (baseline model)")
 
             st.subheader("Model Baseline")
             col1, col2, col3, col4 = st.columns(4)
@@ -958,27 +1010,27 @@ elif page == "Model":
             with col4:
                 create_kpi_card("R2", f"{metrics['r2']:.3f}", 'metric')
 
-            st.subheader("Prognoza Baseline")
+            st.subheader("Baseline Forecast")
             col1, col2 = st.columns([2, 1])
 
             with col1:
-                st.dataframe(result["df_plot"].round(2), use_container_width=True, hide_index=True)
+                st.dataframe(to_display_df(result["df_plot"].round(2)), use_container_width=True, hide_index=True)
 
             with col2:
                 csv = result["df_plot"].to_csv(index=False).encode()
                 st.download_button(
-                    "Descarca CSV",
+                    "Download CSV",
                     csv,
-                    file_name=f"prognoza_baseline_{selected_article_id}_{datetime.now().strftime('%Y%m%d')}.csv",
+                    file_name=f"baseline_forecast_{selected_article_id}_{datetime.now().strftime('%Y%m%d')}.csv",
                     mime="text/csv"
                 )
         else:
-            st.success(f"Prognoza {result['horizon']} zile generata")
+            st.success(f"{result['horizon']}-day forecast generated")
 
-            tab1, tab2, tab3 = st.tabs(["Grafic", "Metrici", "Tabel"])
+            tab1, tab2, tab3 = st.tabs(["Chart", "Metrics", "Table"])
 
             with tab1:
-                st.subheader("Comparatie Actual vs Predictie vs Prognoza")
+                st.subheader("Actual vs Predicted vs Forecast")
 
                 df_comparison = result["df_test"].copy()
                 df_comparison['PREDICTIE'] = result["y_pred"]
@@ -1006,13 +1058,13 @@ elif page == "Model":
                     create_kpi_card("Features", f"{result['n_features']}", 'info')
 
                 st.divider()
-                st.subheader("Metrici Detaliate")
+                st.subheader("Detailed Metrics")
 
                 col1, col2 = st.columns(2)
 
                 with col1:
-                    st.metric("Mean Absolute Error (MAE)", f"{metrics['mae']:.2f} unitati")
-                    st.metric("Root Mean Squared Error", f"{metrics['rmse']:.2f} unitati")
+                    st.metric("Mean Absolute Error (MAE)", f"{metrics['mae']:.2f} units")
+                    st.metric("Root Mean Squared Error", f"{metrics['rmse']:.2f} units")
 
                 with col2:
                     st.metric("R2 Score", f"{metrics['r2']:.4f}")
@@ -1026,36 +1078,36 @@ elif page == "Model":
                         apply_plot_theme(fig_importance)
                         st.plotly_chart(fig_importance, use_container_width=True)
                 except Exception:
-                    st.info("Feature importance nu poate fi calculata pentru acest model")
+                    st.info("Feature importance cannot be computed for this model")
 
-                with st.expander("Lista completa de features"):
+                with st.expander("Full feature list"):
                     st.write(result.get("feature_cols", []))
 
             with tab3:
-                st.subheader("Tabel Prognoza")
+                st.subheader("Forecast Table")
 
                 col1, col2 = st.columns([2, 1])
 
                 with col1:
                     df_display = result["df_plot"].copy()
                     df_display['PREDICTIE'] = df_display['PREDICTIE'].round(2)
-                    st.dataframe(df_display, use_container_width=True, hide_index=True)
+                    st.dataframe(to_display_df(df_display), use_container_width=True, hide_index=True)
 
                 with col2:
                     csv = result["df_plot"].to_csv(index=False).encode()
                     st.download_button(
-                        "Descarca CSV",
+                        "Download CSV",
                         csv,
-                        file_name=f"prognoza_xgboost_{selected_article_id}_{datetime.now().strftime('%Y%m%d')}.csv",
+                        file_name=f"xgboost_forecast_{selected_article_id}_{datetime.now().strftime('%Y%m%d')}.csv",
                         mime="text/csv"
                     )
 
 else:
     if not saved_is_valid:
-        st.info('Ruleaza modelul in pagina "Model" pentru a vedea analiza de risc.')
+        st.info('Run the model on the "Model" page to see risk analysis.')
     else:
         result = st.session_state.model_result
-        st.subheader("Analiza Risc Ruptura")
+        st.subheader("Stockout Risk Analysis")
 
         metrics_stockout = get_stockout_metrics(result["df_article"], target_col=result["target_col"])
         col1, col2, col3 = st.columns(3)
@@ -1070,14 +1122,14 @@ else:
         with col2:
             zero_pct = (metrics_stockout['zero_sale_days'] / len(result["df_article"])) * 100
             create_kpi_card(
-                "Zile Zero Vanzare",
+                "Zero-Sale Days",
                 f"{zero_pct:.1f}%",
                 'warning' if zero_pct > 20 else 'metric'
             )
 
         with col3:
             create_kpi_card(
-                "Coef. Variatie",
+                "Coeff. of Variation",
                 f"{metrics_stockout['cv']:.2f}",
                 'metric'
             )
@@ -1089,25 +1141,25 @@ else:
         forecast_mean = result["future_pred"].mean()
         forecast_std = result["future_pred"].std()
 
-        st.markdown("#### Recomandari")
+        st.markdown("#### Recommendations")
         col1, col2 = st.columns(2)
 
         with col1:
             st.write(
                 """
-                **Metrici Istoric:**
-                - Cerere medie: {:.1f} unitati/zi
-                - Deviere standard: {:.1f}
-                - Coef. Variatie: {:.2f}
+                **Historical Metrics:**
+                - Average demand: {:.1f} units/day
+                - Standard deviation: {:.1f}
+                - Coeff. of variation: {:.2f}
                 """.format(avg_demand, std_demand, metrics_stockout['cv'])
             )
 
         with col2:
             st.write(
                 """
-                **Prognoza {}d:**
-                - Cerere medie: {:.1f} unitati/zi
-                - Deviere standard: {:.1f}
+                **{}-day Forecast:**
+                - Average demand: {:.1f} units/day
+                - Standard deviation: {:.1f}
                 - Min/Max: {:.0f} / {:.0f}
                 """.format(result["horizon"], forecast_mean, forecast_std,
                            result["future_pred"].min(), result["future_pred"].max())
@@ -1119,10 +1171,10 @@ else:
 
         st.success(
             """
-            **Stock de Siguranta (SL 95%):** {stock:.0f} unitati
+            **Safety Stock (SL 95%):** {stock:.0f} units
 
-                Reaprovizioneaza cand stocul ajunge sub {stock:.0f} unitati
-                pentru a evita ruptura cu o probabilitate de 95%.
+                Reorder when stock drops below {stock:.0f} units
+                to avoid stockout with 95% probability.
                 """.format(stock=safety_stock)
             )
 
@@ -1132,7 +1184,8 @@ else:
 st.divider()
 st.markdown("""
 ---
-**Dashboard Optimizare Stocuri | XGBoost Forecasting**  
-Disertatie - Metode Predictive pentru Optimizarea Stocurilor
+**Inventory Optimization Dashboard | XGBoost Forecasting**  
+Thesis - Predictive Methods for Inventory Optimization
 """)
+
 

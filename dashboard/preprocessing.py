@@ -1,10 +1,42 @@
-"""
+﻿"""
 Data preprocessing and utilities for inventory optimization dashboard
 """
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from datetime import datetime, timedelta
+
+
+CANONICAL_COLUMN_ALIASES = {
+    "DATA": {"DATA", "DATE", "SALES_DATE", "SALE_DATE"},
+    "ID_ARTICOL": {"ID_ARTICOL", "ARTICLE_ID", "SKU", "PRODUCT_ID", "ITEM_ID"},
+    "ARTICOL": {"ARTICOL", "ARTICLE", "PRODUCT", "ITEM", "ARTICLE_NAME", "PRODUCT_NAME"},
+    "CANTITATE": {"CANTITATE", "QUANTITY", "QTY", "SALES_QUANTITY"},
+    "VAL_IESIRE_FARA_TVA": {"VAL_IESIRE_FARA_TVA", "NET_SALES_NO_VAT", "NET_SALES", "NET_VALUE"},
+    "VAL_IESIRE_CU_TVA": {"VAL_IESIRE_CU_TVA", "GROSS_SALES_WITH_VAT", "GROSS_SALES", "GROSS_VALUE"},
+    "VAL_INTRARE_FARA_TVA": {"VAL_INTRARE_FARA_TVA", "NET_COST", "INPUT_VALUE_NO_VAT"},
+    "TOTAL_DISCOUNT": {"TOTAL_DISCOUNT", "DISCOUNT_TOTAL"},
+    "RATA_DISCOUNT": {"RATA_DISCOUNT", "DISCOUNT_RATE"},
+    "ADAOS": {"ADAOS", "MARKUP", "MARGIN_VALUE"},
+    "STOC_INITIAL": {"STOC_INITIAL", "OPENING_STOCK", "INITIAL_STOCK"},
+    "STOC_FINAL": {"STOC_FINAL", "CLOSING_STOCK", "FINAL_STOCK"},
+    "RUPTURA_STOC": {"RUPTURA_STOC", "STOCKOUT", "STOCKOUT_FLAG"},
+}
+
+
+def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    normalized = {col.strip().upper(): col for col in df.columns}
+    rename_map = {}
+    for canonical, aliases in CANONICAL_COLUMN_ALIASES.items():
+        for alias in aliases:
+            if alias in normalized:
+                source_col = normalized[alias]
+                if source_col != canonical:
+                    rename_map[source_col] = canonical
+                break
+    if rename_map:
+        df = df.rename(columns=rename_map)
+    return df
 
 
 def _black_friday_dates(year: int) -> pd.DatetimeIndex:
@@ -47,56 +79,66 @@ def load_and_prepare_data(
 ) -> pd.DataFrame:
     """
     Load CSV and perform initial preprocessing
-    
+
     Parameters:
     -----------
     csv_path : str
         Path to the CSV file
-        
+
     Returns:
     --------
     pd.DataFrame
         Preprocessed dataframe
     """
     df = pd.read_csv(csv_path)
-    
+    df = _normalize_columns(df)
+
     # Detect and convert date column
     date_col = None
     for col in df.columns:
         if 'data' in col.lower() or 'date' in col.lower():
             date_col = col
             break
-    
+
     if date_col:
-        df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+        parsed = pd.to_datetime(df[date_col], format="%d-%b-%y", errors='coerce')
+        if parsed.isna().all():
+            parsed = pd.to_datetime(df[date_col], errors='coerce')
+        df[date_col] = parsed
         df = df.rename(columns={date_col: 'DATA'})
     else:
-        raise ValueError("Nu am găsit o coloană de dată în CSV")
-    
+        raise ValueError("Could not find a date column in CSV")
+
     # Detect target column (quantity/sales)
     target_col = None
     for col in df.columns:
-        if 'cantitate' in col.lower() or 'qty' in col.lower() or 'vânzări' in col.lower():
+        col_l = col.lower()
+        if (
+            'cantitate' in col_l
+            or 'quantity' in col_l
+            or 'qty' in col_l
+            or 'sales' in col_l
+        ):
             target_col = col
             break
-    
+
     if not target_col:
         # Default to first numeric column after common identifiers
         numeric_cols = df.select_dtypes(include=['number']).columns
         for col in numeric_cols:
-            if col not in ['ID_ARTICOL', 'RUPTURA_STOC']:
+            if col not in ['ID_ARTICOL', 'RUPTURA_STOC', 'STOCKOUT']:
                 target_col = col
                 break
-    
+
     # Sort by date
     df = df.sort_values('DATA').reset_index(drop=True)
-    
+
     # Fill missing values in numeric columns
     numeric_cols = df.select_dtypes(include=['number']).columns
     for col in numeric_cols:
         if col != 'ID_ARTICOL':
             df[col] = df[col].fillna(0)
-    
+
     if bf_handling == "exclude":
         df = _handle_black_friday(df, target_col, bf_handling)
 
@@ -106,7 +148,7 @@ def load_and_prepare_data(
 def filter_by_article(df: pd.DataFrame, article_id, article_col: str = None) -> pd.DataFrame:
     """
     Filter dataframe for specific article ID
-    
+
     Parameters:
     -----------
     df : pd.DataFrame
@@ -115,7 +157,7 @@ def filter_by_article(df: pd.DataFrame, article_id, article_col: str = None) -> 
         Article ID to filter (will auto-convert to match column dtype)
     article_col : str, optional
         Column name with article IDs (auto-detect if None)
-        
+
     Returns:
     --------
     pd.DataFrame
@@ -125,13 +167,13 @@ def filter_by_article(df: pd.DataFrame, article_id, article_col: str = None) -> 
     if article_col is None:
         article_col = None
         for col in df.columns:
-            if 'articol' in col.lower():
+            if any(key in col.lower() for key in ['articol', 'article', 'sku', 'product', 'item']):
                 article_col = col
                 break
-    
+
     if article_col is None:
-        raise ValueError("Nu am găsit o coloană ID_ARTICOL")
-    
+        raise ValueError("Could not find an article ID column")
+
     # Convert article_id to match column dtype
     col_dtype = df[article_col].dtype
     try:
@@ -143,41 +185,41 @@ def filter_by_article(df: pd.DataFrame, article_id, article_col: str = None) -> 
             article_id = str(article_id)
     except (ValueError, TypeError):
         pass  # Use article_id as-is
-    
+
     df_article = df[df[article_col] == article_id].copy()
     if len(df_article) == 0:
         raise ValueError(f"No data found for article {article_id} in column {article_col}")
-    
+
     return df_article.sort_values('DATA').reset_index(drop=True)
 
 
 def handle_missing_dates(df: pd.DataFrame, fill_method: str = 'forward') -> pd.DataFrame:
     """
     Fill missing dates in time series
-    
+
     Parameters:
     -----------
     df : pd.DataFrame
         Dataframe with DATE column
     fill_method : str
         'forward' for forward fill, 'zero' for zero fill
-        
+
     Returns:
     --------
     pd.DataFrame
         Dataframe with continuous dates
     """
     df = df.sort_values('DATA').reset_index(drop=True)
-    
+
     date_range = pd.date_range(
         start=df['DATA'].min(),
         end=df['DATA'].max(),
         freq='D'
     )
-    
+
     df_full = pd.DataFrame({'DATA': date_range})
     df = df_full.merge(df, on='DATA', how='left')
-    
+
     numeric_cols = df.select_dtypes(include=['number']).columns
     for col in numeric_cols:
         if col != 'ID_ARTICOL':
@@ -185,13 +227,13 @@ def handle_missing_dates(df: pd.DataFrame, fill_method: str = 'forward') -> pd.D
                 df[col] = df[col].fillna(method='ffill').fillna(0)
             else:
                 df[col] = df[col].fillna(0)
-    
+
     # Fill non-numeric columns
     non_numeric = df.select_dtypes(exclude=['number']).columns
     for col in non_numeric:
         if col != 'DATA':
             df[col] = df[col].fillna(method='ffill').fillna('')
-    
+
     return df.reset_index(drop=True)
 
 
@@ -202,18 +244,18 @@ class TimeSeriesScaler:
     def __init__(self):
         self.scaler = MinMaxScaler()
         self.fit = False
-    
+
     def fit_transform(self, data: np.ndarray) -> np.ndarray:
         """Fit and transform data"""
         self.fit = True
         return self.scaler.fit_transform(data)
-    
+
     def transform(self, data: np.ndarray) -> np.ndarray:
         """Transform data"""
         if not self.fit:
             raise ValueError("Scaler not fitted yet")
         return self.scaler.transform(data)
-    
+
     def inverse_transform(self, data: np.ndarray) -> np.ndarray:
         """Inverse transform"""
         if not self.fit:
@@ -227,14 +269,14 @@ def make_sequences(
 ) -> tuple:
     """
     Create sequences for time series forecasting
-    
+
     Parameters:
     -----------
     data_scaled : np.ndarray
         Scaled 1D array of values
     lookback : int
         Number of previous timesteps to use for prediction
-        
+
     Returns:
     --------
     tuple
@@ -244,48 +286,48 @@ def make_sequences(
     for i in range(lookback, len(data_scaled)):
         X.append(data_scaled[i-lookback:i, 0])
         y.append(data_scaled[i, 0])
-    
+
     X = np.array(X)
     y = np.array(y)
-    
+
     return X[..., np.newaxis], y
 
 
 def get_stockout_metrics(df: pd.DataFrame, target_col: str) -> dict:
     """
     Calculate stockout risk metrics
-    
+
     Parameters:
     -----------
     df : pd.DataFrame
         Dataframe with time series data
     target_col : str
         Column name of target variable (quantity/sales)
-        
+
     Returns:
     --------
     dict
         Metrics including avg daily sales, low stock days, etc.
     """
     metrics = {}
-    
+
     # Average daily quantity
     metrics['avg_daily'] = df[target_col].mean()
     metrics['std_daily'] = df[target_col].std()
     metrics['max_daily'] = df[target_col].max()
     metrics['min_daily'] = df[target_col].min()
-    
+
     # Find zero-sale days (potential stockouts)
     zero_days = (df[target_col] == 0).sum()
     metrics['zero_sale_days'] = zero_days
     metrics['zero_sale_percent'] = round(100 * zero_days / len(df), 2)
-    
+
     # Coefficient of variation (demand volatility)
     if metrics['avg_daily'] > 0:
         metrics['cv'] = metrics['std_daily'] / metrics['avg_daily']
     else:
         metrics['cv'] = 0
-    
+
     return metrics
 
 
@@ -296,7 +338,7 @@ def forecast_to_dataframe(
 ) -> pd.DataFrame:
     """
     Convert forecast array to DataFrame
-    
+
     Parameters:
     -----------
     forecast_values : np.ndarray
@@ -305,7 +347,7 @@ def forecast_to_dataframe(
         Last date in historical data
     horizon : int
         Number of days to forecast
-        
+
     Returns:
     --------
     pd.DataFrame
@@ -316,7 +358,7 @@ def forecast_to_dataframe(
         periods=horizon,
         freq='D'
     )
-    
+
     return pd.DataFrame({
         'DATA': dates,
         'PREDICTIE': forecast_values[:horizon]

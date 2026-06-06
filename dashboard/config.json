@@ -1,30 +1,30 @@
-{
+﻿{
   "dashboard": {
     "version": "2.0.0",
-    "title": "Dashboard Optimizare Stocuri - Predicție XGBoost",
-    "description": "Aplicație Streamlit pentru prognoza cererii și managementul stocurilor folosind XGBoost",
+    "title": "Inventory Optimization Dashboard - XGBoost Forecast",
+    "description": "Streamlit application for demand forecasting and inventory management with XGBoost",
     "author": "Mara",
     "institution": "Universitate",
-    "thesis_topic": "Optimizarea Stocurilor prin Metode Predictive",
+    "thesis_topic": "Inventory Optimization through Predictive Methods",
     "year": 2024,
     "migration_notes": "Upgraded from LSTM to XGBoost v2.0 - better performance, faster training, fallback baseline support"
   },
   
   "data": {
-    "csv_path": "../data_raw/date_24_art_loreal_20%.csv",
+    "csv_path": "../data_raw/date_24_art_portfolio_20.csv",
     "required_columns": {
-      "date": ["DATA", "DATE", "DATE_VÂNZARE", "DATE_VANZARE"],
-      "article_id": ["ID_ARTICOL", "ARTICLE_ID", "SKU"],
-      "target": ["CANTITATE", "QUANTITY", "SALES", "VAL_IESIRE_FARA_TVA"]
+      "date": ["DATE", "DATA", "SALES_DATE", "DATE_VANZARE"],
+      "article_id": ["ARTICLE_ID", "ID_ARTICOL", "SKU"],
+      "target": ["QUANTITY", "CANTITATE", "SALES", "NET_SALES_NO_VAT", "VAL_IESIRE_FARA_TVA"]
     },
     "optional_columns": [
-      "ARTICOL",
-      "STOC_INITIAL",
-      "STOC_FINAL",
-      "VAL_IESIRE_CU_TVA",
-      "ADAOS",
+      "ARTICLE",
+      "OPENING_STOCK",
+      "CLOSING_STOCK",
+      "GROSS_SALES_WITH_VAT",
+      "MARKUP",
       "TOTAL_DISCOUNT",
-      "RATA_DISCOUNT"
+      "DISCOUNT_RATE"
     ]
   },
   
@@ -80,8 +80,8 @@
     "tabs": [
       "Grafic Principal",
       "Metrice Evaluare",
-      "Tabel Prognoză",
-      "Analiza Risc Ruptură"
+      "Forecast Table",
+      "Analiza Risc RupturÄƒ"
     ],
     "sidebar_components": [
       "CSV Path",
@@ -196,3 +196,4 @@
     "config.json": "This configuration file"
   }
 }
+

@@ -1,4 +1,4 @@
-"""
+﻿"""
 XGBoost Model Training & Prediction Module
 
 Feature Engineering:
@@ -10,7 +10,7 @@ Feature Engineering:
 Training:
 - Train/test split (80/20)
 - XGBoost with optimized hyperparameters
-- Evaluation metrics (MAE, RMSE, R², MAPE)
+- Evaluation metrics (MAE, RMSE, RÂ², MAPE)
 
 Prediction:
 - Multi-step forecasting with recursive predictions
@@ -65,24 +65,24 @@ class XGBoostFeatureEngineer:
         # Drop rows with missing target
         df = df.dropna(subset=[self.target_col])
         
-        # ═════════════════════════════════════════════════════════════════
+        # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         # 1. TEMPORAL FEATURES
-        # ═════════════════════════════════════════════════════════════════
+        # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         df['DOW'] = df['DATA'].dt.dayofweek                           # 0-6 (Mon-Sun)
         df['month'] = df['DATA'].dt.month                             # 1-12
         df['ESTE_WEEKEND'] = (df['DOW'] >= 5).astype(int)             # 1 if Sat/Sun
         df['ZI_DIN_LUNA'] = df['DATA'].dt.day                         # 1-31
         df['week'] = df['DATA'].dt.isocalendar().week                 # Week of year
         
-        # ═════════════════════════════════════════════════════════════════
+        # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         # 2. LAG FEATURES (shifted target values)
-        # ═════════════════════════════════════════════════════════════════
+        # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         for lag in self.lag_features:
             df[f'lag_{lag}'] = df[self.target_col].shift(lag)
         
-        # ═════════════════════════════════════════════════════════════════
+        # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         # 3. ROLLING STATISTICS (using shift(1) to avoid leakage)
-        # ═════════════════════════════════════════════════════════════════
+        # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         for window in self.rolling_windows:
             df[f'roll_mean_{window}'] = df[self.target_col].shift(1).rolling(window).mean()
             df[f'roll_std_{window}'] = df[self.target_col].shift(1).rolling(window).std()
@@ -103,9 +103,9 @@ class XGBoostFeatureEngineer:
                     df[f'{col}_roll_mean_{window}'] = shifted.rolling(window).mean()
                     df[f'{col}_roll_std_{window}'] = shifted.rolling(window).std()
         
-        # ═════════════════════════════════════════════════════════════════
+        # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         # 4. IDENTIFY FEATURE COLUMNS (everything except target and DATE)
-        # ═════════════════════════════════════════════════════════════════
+        # â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
         # Use only engineered features to avoid leaking or freezing exogenous columns
         base_features = ['DOW', 'month', 'ESTE_WEEKEND', 'ZI_DIN_LUNA', 'week']
         lag_features = [f'lag_{lag}' for lag in self.lag_features]
@@ -459,7 +459,7 @@ def build_and_train_xgboost(df: pd.DataFrame,
     # Check minimum data
     if len(df) < min_samples:
         return None, None, {
-            'error': f'Prea puține date: {len(df)} < {min_samples}',
+            'error': f'Prea puÈ›ine date: {len(df)} < {min_samples}',
             'n_samples': len(df)
         }
     
@@ -469,14 +469,14 @@ def build_and_train_xgboost(df: pd.DataFrame,
     
     if len(df_feat) < min_samples:
         return None, None, {
-            'error': f'După feature engineering: {len(df_feat)} < {min_samples}',
+            'error': f'DupÄƒ feature engineering: {len(df_feat)} < {min_samples}',
             'n_samples': len(df_feat)
         }
     
     # Train/test split (last N days as test)
     if len(df_feat) <= horizon:
         return None, None, {
-            'error': f'Prea puține date pentru split pe {horizon} zile',
+            'error': f'Prea puÈ›ine date pentru split pe {horizon} zile',
             'n_samples': len(df_feat)
         }
     df_feat = df_feat.sort_values('DATA').reset_index(drop=True)
@@ -547,3 +547,4 @@ def build_and_train_xgboost(df: pd.DataFrame,
         'best_params': best_params,
         'horizon': horizon
     }
+

@@ -43,23 +43,21 @@ def plot_forecast_comparison(
         x=df_historical['DATA'],
         y=df_historical[target_col],
         mode='lines',
-        name='Istoric',
+        name='Historical',
         line=dict(color='blue', width=2),
-        hovertemplate='<b>Data:</b> %{x|%Y-%m-%d}<br><b>Actual:</b> %{y:.2f}<extra></extra>'
+        hovertemplate='<b>Date:</b> %{x|%Y-%m-%d}<br><b>Actual:</b> %{y:.2f}<extra></extra>'
     ))
     
     # Test predictions (if available)
     if df_test_pred is not None and len(df_test_pred) > 0:
 
-        print(df_test_pred.columns)
-
         fig.add_trace(go.Scatter(
             x=df_test_pred['DATA'],
             y=df_test_pred['PREDICTIE'],
             mode='lines',
-            name='Predicție Test',
+            name='Test Prediction',
             line=dict(color='orange', width=2, dash='dash'),
-            hovertemplate='<b>Data:</b> %{x|%Y-%m-%d}<br><b>Predicție:</b> %{y:.2f}<extra></extra>'
+            hovertemplate='<b>Date:</b> %{x|%Y-%m-%d}<br><b>Prediction:</b> %{y:.2f}<extra></extra>'
         ))
     
     # Future forecast
@@ -68,10 +66,10 @@ def plot_forecast_comparison(
             x=df_forecast['DATA'],
             y=df_forecast['PREDICTIE'],
             mode='lines+markers',
-            name='Prognoză',
+            name='Forecast',
             line=dict(color='red', width=2),
             marker=dict(size=5),
-            hovertemplate='<b>Data:</b> %{x|%Y-%m-%d}<br><b>Prognoză:</b> %{y:.2f}<extra></extra>'
+            hovertemplate='<b>Date:</b> %{x|%Y-%m-%d}<br><b>Forecast:</b> %{y:.2f}<extra></extra>'
         ))
     
     # Add vertical line to separate history from forecast
@@ -94,7 +92,7 @@ def plot_forecast_comparison(
             y=1,
             xref='x',
             yref='paper',
-            text='Prezent',
+            text='Today',
             showarrow=False,
             xanchor='left',
             yanchor='bottom'
@@ -102,8 +100,8 @@ def plot_forecast_comparison(
     
     fig.update_layout(
         title=title,
-        xaxis_title='Data',
-        yaxis_title='Valoare',
+        xaxis_title='Date',
+        yaxis_title='Value',
         hovermode='x unified',
         template='plotly_white',
         height=500,
@@ -115,7 +113,7 @@ def plot_forecast_comparison(
 
 def plot_distribution(
     data: pd.Series,
-    title: str = "Distribuție",
+    title: str = "Distribution",
     nbins: int = 30
 ) -> go.Figure:
     """
@@ -125,7 +123,7 @@ def plot_distribution(
         x=data,
         nbins=nbins,
         title=title,
-        labels={'x': 'Valoare'},
+        labels={'x': 'Value'},
         opacity=0.7
     )
     
@@ -152,16 +150,16 @@ def plot_residuals(
         fig = px.scatter(
             x=dates,
             y=residuals,
-            title='Reziduuri (Actual - Predicție)',
-            labels={'x': 'Data', 'y': 'Reziduu'},
+            title='Residuals (Actual - Prediction)',
+            labels={'x': 'Date', 'y': 'Residual'},
             opacity=0.6
         )
     else:
         fig = px.scatter(
             x=np.arange(len(residuals)),
             y=residuals,
-            title='Reziduuri (Actual - Predicție)',
-            labels={'x': 'Index', 'y': 'Reziduu'},
+            title='Residuals (Actual - Prediction)',
+            labels={'x': 'Index', 'y': 'Residual'},
             opacity=0.6
         )
     
@@ -184,11 +182,11 @@ def create_metrics_table(metrics: dict) -> pd.DataFrame:
     for key, value in metrics.items():
         if isinstance(value, (int, float)):
             if isinstance(value, float):
-                data.append({'Metrica': key, 'Valoare': f"{value:.4f}"})
+                data.append({'Metric': key, 'Value': f"{value:.4f}"})
             else:
-                data.append({'Metrica': key, 'Valoare': str(value)})
+                data.append({'Metric': key, 'Value': str(value)})
         elif value is not None:
-            data.append({'Metrica': key, 'Valoare': str(value)})
+            data.append({'Metric': key, 'Value': str(value)})
     
     return pd.DataFrame(data)
 
@@ -232,8 +230,8 @@ def plot_monthly_aggregation(
     fig = px.bar(
         x=monthly_data.index,
         y=monthly_data.values,
-        title=f'Agregare lunară – {target_col} ({agg_func})',
-        labels={'x': 'Lună', 'y': 'Valoare'},
+        title=f'Monthly aggregation - {target_col} ({agg_func})',
+        labels={'x': 'Month', 'y': 'Value'},
         opacity=0.7
     )
     

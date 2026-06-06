@@ -1,4 +1,4 @@
-"""
+﻿"""
 Baseline Model for Time Series Forecasting
 
 Used when there's insufficient data for XGBoost training.
@@ -101,7 +101,7 @@ def build_baseline_fallback(df: pd.DataFrame,
     y = y[~np.isnan(y)]
     
     if len(y) < 5:
-        return None, {'error': 'Prea puține date valide (<5 eșantioane)'}
+        return None, {'error': 'Prea puÈ›ine date valide (<5 eÈ™antioane)'}
     
     # For very small datasets, use all data as train/test on same data
     if len(y) < 10:
@@ -138,4 +138,5 @@ def build_baseline_fallback(df: pd.DataFrame,
         'n_samples': len(y),
         'warning': 'Baseline model - insufficient data for XGBoost (< 30 samples)'
     }
+
 
