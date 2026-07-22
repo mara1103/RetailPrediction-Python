@@ -10,7 +10,9 @@ Instead of relying only on average daily sales, the application evaluates multip
 ## The project includes the complete data science workflow:
 
 Data extraction
+
 Data preprocessing
+
 Exploratory Data Analysis (EDA)
 Time Series Analysis
 Forecasting models
