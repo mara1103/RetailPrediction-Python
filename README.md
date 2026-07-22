@@ -14,9 +14,13 @@ Data extraction
 Data preprocessing
 
 Exploratory Data Analysis (EDA)
+
 Time Series Analysis
+
 Forecasting models
+
 Model evaluation
+
 Interactive dashboard
 
 ## Technologies
