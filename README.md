@@ -25,16 +25,16 @@ Interactive dashboard
 
 ## Technologies
 
-Python
-Pandas
-NumPy
-Scikit-Learn
-Statsmodels
-TensorFlow / Keras
-XGBoost
-Prophet
-Matplotlib
-Streamlit
+- Python
+- Pandas
+- NumPy
+- Scikit-Learn
+- Statsmodels
+- TensorFlow / Keras
+- XGBoost
+- Prophet
+- Matplotlib
+- Streamlit
 
 ## Pre - processing 
 <img width="708" height="542" alt="image" src="https://github.com/user-attachments/assets/fddd1356-0249-44fa-8d1c-99009e2a083e" />
